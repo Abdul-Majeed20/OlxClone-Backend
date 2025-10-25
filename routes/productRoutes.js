@@ -24,6 +24,7 @@ router.get("/auth/me", checkAuth);
 router.get("/admin/allUsers" , getUsers)
 router.get("/user/products", getProducts);
 router.get("/admin/products", getProducts);
+router.get("/allProducts" , getProducts)
 router.get("/admin/allOrders" , getOrders)
 router.put('/admin/updateOrder/:orderId', updateOrderStatus)
 router.get("/user/myProducts", getMyProducts);
