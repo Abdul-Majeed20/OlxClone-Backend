@@ -15,9 +15,8 @@
 // }
 
 import { MongoClient, ServerApiVersion } from "mongodb";
-const uri =
-  "mongodb+srv://ABM:newUser1@projectcluster.jbxprft.mongodb.net/?appName=ProjectCluster";
-// const uri = "mongodb://localhost:27017/OlxClone"
+// const uri ="mongodb+srv://ABM:newUser1@projectcluster.jbxprft.mongodb.net/?appName=ProjectCluster";
+const uri = "mongodb://localhost:27017/OlxClone"
 export const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
