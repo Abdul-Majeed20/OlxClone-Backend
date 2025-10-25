@@ -9,14 +9,14 @@ import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 const app = express();
 import { client } from "./dbConfig.js";
-const PORT = 3000;
 
 dotenv.config();
 client.connect()
 console.log("Database is conneceted on Atlas")
+const PORT = process.env.PORT || 3000;
 app.use(
   cors({
-    origin: "http://localhost:5173", // your frontend origin
+     origin: ["https://olx-clone-sigma-three.vercel.app", "http://localhost:5173"], // your frontend origin
     credentials: true,
   })
 );
@@ -26,6 +26,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(express.json());
+
+app.get("/", (res ,req) => res.send("Backend is running"))
 
 app.use(authRoutes);
 
