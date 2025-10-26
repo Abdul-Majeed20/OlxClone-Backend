@@ -40,8 +40,8 @@ export const getProducts = async (req, res) => {
   if (decoded) {
     const products = await productsCollection
       .find({
-        isDeleted: false,
-        deletedAt: null,
+        isDelete: false,
+        isDeletedAt: null,
       })
       .toArray();
     return res.status(200).send({
@@ -148,7 +148,7 @@ export const getProductById = async (req, res) => {
 
     // Find product by ID
     const product = await productsCollection.findOne({
-      _id: new ObjectId(productId), isDeleted: false,
+      _id: new ObjectId(productId), isDelete: false,
     });
 
     // Check if product exists
@@ -291,8 +291,8 @@ export const addProduct = async (req, res) => {
       images: imageUrls, // ✅ now accessible
       postedBy: decoded._id,
       status: true,
-      isDelete: false,
-      deletedAt: null,
+      isDeleted: false,
+      isDeletedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -435,8 +435,8 @@ export const deleteProduct = async (req, res) => {
       { _id: new ObjectId(id) },
       {
         $set: {
-          isDeleted: true,
-          deletedAt: new Date(),
+          isDelete: true,
+          isDeletedAt: new Date(),
         },
       },
       { returnDocument: "after" } // returns the updated document
