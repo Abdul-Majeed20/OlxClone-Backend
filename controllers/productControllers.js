@@ -38,7 +38,12 @@ export const checkAuth = (req, res) => {
 export const getProducts = async (req, res) => {
   const decoded = jwt.verify(req.cookies.token, process.env.SECRET_KEY);
   if (decoded) {
-    const products = await productsCollection.find().toArray();
+    const products = await productsCollection
+      .find({
+        isDeleted: false,
+        deletedAt: null,
+      })
+      .toArray();
     return res.status(200).send({
       status: 1,
       data: products,
@@ -143,7 +148,7 @@ export const getProductById = async (req, res) => {
 
     // Find product by ID
     const product = await productsCollection.findOne({
-      _id: new ObjectId(productId),
+      _id: new ObjectId(productId), isDeleted: false,
     });
 
     // Check if product exists
@@ -287,7 +292,7 @@ export const addProduct = async (req, res) => {
       postedBy: decoded._id,
       status: true,
       isDelete: false,
-      isDeletedAt: null,
+      deletedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -344,6 +349,7 @@ export const addFavourite = async (req, res) => {
 
     return res.status(200).send({
       status: 1,
+      success: true,
       message: "Added to favorites",
       data: { favouriteId: favourite.insertedId },
     });
@@ -391,6 +397,7 @@ export const getFavourites = async (req, res) => {
     // ✅ Send plain JSON (no BSON issue now)
     return res.status(200).send({
       status: 1,
+      success: true,
       data: favProducts,
       message: "Favourites fetched successfully",
     });
@@ -413,7 +420,6 @@ export const deleteProduct = async (req, res) => {
         .json({ success: false, message: "Invalid product ID" });
     }
 
-    const productsCollection = db.collection("products");
 
     // Find the product before deletion
     const product = await productsCollection.findOne({ _id: new ObjectId(id) });
@@ -425,9 +431,16 @@ export const deleteProduct = async (req, res) => {
     }
 
     // Delete the product
-    const result = await productsCollection.deleteOne({
-      _id: new ObjectId(id),
-    });
+    const result = await productsCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      },
+      { returnDocument: "after" } // returns the updated document
+    );
 
     if (result.deletedCount === 1) {
       return res.status(200).json({
@@ -462,7 +475,6 @@ export const addToCart = async (req, res) => {
 
     // 2️⃣ Get product ID from body
     const { id } = req.body;
-    console.log("Product Id:", id);
 
     if (!id) {
       return res.status(400).send({
@@ -487,8 +499,9 @@ export const addToCart = async (req, res) => {
     });
 
     if (existingCartItem) {
-      return res.status(400).send({
+      return res.status(201).send({
         status: 0,
+        success: true,
         message: "Product already in cart",
       });
     }
@@ -503,6 +516,7 @@ export const addToCart = async (req, res) => {
     // 6️⃣ Return success response
     return res.status(200).send({
       status: 1,
+      success: true,
       message: "Product added to cart successfully",
       data: { cartItemId: result.insertedId },
     });
@@ -534,6 +548,7 @@ export const getCartItems = async (req, res) => {
     if (!cartDocs.length) {
       return res.status(200).send({
         status: 1,
+        success: true,
         data: [],
         message: "No cart products found",
       });
@@ -550,6 +565,7 @@ export const getCartItems = async (req, res) => {
     // ✅ Send plain JSON (no BSON issue now)
     return res.status(200).send({
       status: 1,
+      success: true,
       data: cartItems,
       message: "Cart Items fetched successfully",
     });
@@ -608,6 +624,7 @@ export const addOrder = async (req, res) => {
       });
       return res.status(200).send({
         status: 1,
+        success: true,
         message: "Order placed successfully",
         data: { orderId: addOrder.insertedId },
       });
@@ -634,7 +651,7 @@ export const getMyOrders = async (req, res) => {
     }
     const userId = decoded._id;
     const orders = await orderCollection.find({ userId }).toArray();
-    return res.status(200).json({ success: true, data: orders });
+    return res.status(200).json({ status: 1, success: true, data: orders });
   } catch (error) {
     console.error("Error fetching orders:", error);
     return res
@@ -649,6 +666,7 @@ export const getOrders = async (req, res) => {
     const orders = await orderCollection.find().toArray();
     return res.status(200).send({
       status: 1,
+      success: true,
       data: orders,
       message: "Product Fetched Successfully",
     });
@@ -666,7 +684,6 @@ export const updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
 
-
     if (!status) {
       return res.status(400).json({ message: "Status field is required" });
     }
@@ -682,6 +699,7 @@ export const updateOrderStatus = async (req, res) => {
 
     res.status(200).json({
       status: 1,
+      success: true,
       message: "Order status updated successfully",
       data: updatedOrder.value,
     });
@@ -700,7 +718,7 @@ export const userProfile = async (req, res) => {
         .send({ status: 0, message: "Authentication required" });
     }
     const userId = decoded._id;
-    const user = await userCollection.findOne({ _id: userId });
+    const user = await userCollection.findOne({ _id: ObjectId(userId) });
     if (!user) {
       return res.status(404).send({ status: 0, message: "User not found" });
     }
